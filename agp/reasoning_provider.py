@@ -102,21 +102,28 @@ class ReasoningProvider:
 
                 if config.openai_api_key and self.provider not in ("openai", "openai_compatible"):
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying failover to OpenAI-compatible...[/orange3]")
-                    try:
-                        self.provider = "openai"
-                        fallback_model = os.getenv("OPENAI_FALLBACK_MODEL", os.getenv("LLM_MODEL", "qwen/qwen3.8-27b"))
-                        if "groq.com" in config.openai_base_url and ("llama" in fallback_model or "gpt-4" in fallback_model):
-                            fallback_model = "qwen/qwen3.8-27b"
-                        self.model = fallback_model
-                        result = await self._call_openai(client, system_prompt, user_prompt)
+                    self.provider = "openai"
+                    fallback_models = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+                    result = None
+                    for f_model in fallback_models:
+                        try:
+                            self.model = f_model
+                            result = await self._call_openai(client, system_prompt, user_prompt)
+                            if result:
+                                break
+                        except Exception as m_err:
+                            logger.warning(f"[dim]Groq model '{f_model}' fallback attempt failed: {m_err}. Trying next model...[/dim]")
+                            continue
+
+                    if result:
                         if not is_permanent_billing_err:
                             self.provider = original_provider
                             self.model = original_model
                         else:
                             logger.warning(f"[yellow]Permanently switched LLM provider to 'openai' due to billing/auth error on '{original_provider}'.[/yellow]")
                         return result
-                    except Exception as fallback_err:
-                        logger.error(f"[red]OpenAI-compatible fallback also failed: {fallback_err}[/red]")
+                    else:
+                        logger.error(f"[red]All OpenAI-compatible fallback models failed.[/red]")
                         self.provider = original_provider
                         self.model = original_model
                 elif config.anthropic_api_key and self.provider != "claude":
