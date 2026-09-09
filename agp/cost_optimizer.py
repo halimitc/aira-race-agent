@@ -6,12 +6,13 @@ from logger import logger
 class CostOptimizer:
     """Calculates trade-offs between paid Oracle questions and paid/free guesses."""
     
-    def __init__(self, ask_cost_usdc: float = 0.001, guess_cost_usdc: float = 0.0, spend_cap_usdc: float = None):
-        """Initialize with track costs. Defaults match Day 3/4 track pricing."""
+    def __init__(self, ask_cost_usdc: float = 0.001, guess_cost_usdc: float = 0.0, spend_cap_usdc: float = None, currency: str = "AGP"):
+        """Initialize with track costs and native currency (AGP/USDC)."""
         self.ask_cost_usdc = ask_cost_usdc
         self.guess_cost_usdc = guess_cost_usdc
         self.spend_cap_usdc = spend_cap_usdc  # None = unlimited
         self.total_spent_usdc = 0.0
+        self.currency = currency
         
         # Base thresholds for profiles
         self.profile_thresholds = {
@@ -23,10 +24,10 @@ class CostOptimizer:
 
     def get_profile_threshold(self) -> float:
         """Returns the base confidence threshold for the configured race profile.
-        If guesses are paid, dynamically downgrades ultra_aggressive to balanced to protect USDC balance."""
+        If guesses are paid, dynamically downgrades ultra_aggressive to balanced to protect balance."""
         profile = config.race_profile
         if self.guess_cost_usdc > 0 and profile == "ultra_aggressive":
-            logger.warning("[orange3]Paid guesses detected! Dynamically downgrading strategy from 'ultra_aggressive' to 'balanced' to protect USDC balance.[/orange3]")
+            logger.warning(f"[orange3]Paid guesses detected! Dynamically downgrading strategy from 'ultra_aggressive' to 'balanced' to protect {self.currency} balance.[/orange3]")
             profile = "balanced"
         return self.profile_thresholds.get(profile, 0.80)
 
@@ -35,7 +36,7 @@ class CostOptimizer:
         if self.spend_cap_usdc is not None:
             remaining = self.spend_cap_usdc - self.total_spent_usdc
             if remaining < self.ask_cost_usdc:
-                logger.warning(f"[orange3]SpendCap exhausted! Spent: ${self.total_spent_usdc:.4f} / Cap: ${self.spend_cap_usdc:.4f}. Cannot ask.[/orange3]")
+                logger.warning(f"[orange3]SpendCap exhausted! Spent: {self.total_spent_usdc:.4f} {self.currency} / Cap: {self.spend_cap_usdc:.4f} {self.currency}. Cannot ask.[/orange3]")
                 return False
         return True
 
@@ -89,8 +90,8 @@ class CostOptimizer:
         
         logger.info(
             f"Cost Analysis: Remaining: {remaining_candidates_count} | Top Prob: {top_candidate_prob:.2%} | "
-            f"Exp. Cost Ask Path: ${expected_cost_ask_path:.6f} USDC | "
-            f"Exp. Cost Guess Path: ${expected_cost_guess_path:.6f} USDC"
+            f"Exp. Cost Ask Path: {expected_cost_ask_path:.6f} {self.currency} | "
+            f"Exp. Cost Guess Path: {expected_cost_guess_path:.6f} {self.currency}"
         )
 
         # Dynamic threshold modification based on wallet balance and SpendCap consumption

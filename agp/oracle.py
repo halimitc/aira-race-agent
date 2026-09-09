@@ -35,12 +35,13 @@ class OracleGateway:
             balance_usd = float(sigil.get("balanceUsd") or 0.0)
             credit_remaining = float(sigil.get("creditRemainingUsd") or 0.0)
             total_available = balance_usd + credit_remaining
+            currency = sigil.get("currency") or "AGP"
             
-            logger.info(f"Sigil Balance: ${balance_usd:.4f} + ${credit_remaining:.4f} credit = ${total_available:.4f} USDC total")
+            logger.info(f"Sigil Balance: {balance_usd:.4f} + {credit_remaining:.4f} credit = {total_available:.4f} {currency} total")
             
             if total_available < self.min_balance_usdc:
                 raise UnsafeBalanceError(
-                    f"Sigil balance (${total_available:.4f} USDC) is below safe limit (${self.min_balance_usdc:.4f} USDC)."
+                    f"Sigil balance ({total_available:.4f} {currency}) is below safe limit ({self.min_balance_usdc:.4f} {currency})."
                 )
             
             self._cached_balance = total_available

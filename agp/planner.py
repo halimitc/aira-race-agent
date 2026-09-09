@@ -219,19 +219,21 @@ class RacePlanner:
                     active_track = t
                     break
             
+            charge_curr = "AGP"
             ask_cost = 0.001
             guess_cost = 0.000
             spend_cap = None
             time_limit_sec = None
             if active_track:
+                charge_curr = active_track.get("chargeCurrency") or "AGP"
                 ask_cost = float(active_track.get("questionCostUsd") or 0.001)
                 guess_cost = float(active_track.get("guessCostUsd") or 0.000)
                 spend_cap_raw = active_track.get("spendCapUsd")
                 spend_cap = float(spend_cap_raw) if spend_cap_raw is not None else None
                 time_limit_raw = active_track.get("timeLimitSeconds")
                 time_limit_sec = int(time_limit_raw) if time_limit_raw is not None else None
-            logger.info(f"[cyan]Track pricing loaded -> Ask: ${ask_cost:.4f} | Guess: ${guess_cost:.4f} | SpendCap: {f'${spend_cap:.2f}' if spend_cap else 'unlimited'} | TimeLimit: {f'{time_limit_sec}s' if time_limit_sec else 'unlimited'}[/cyan]")
-            self.cost_optimizer = CostOptimizer(ask_cost_usdc=ask_cost, guess_cost_usdc=guess_cost, spend_cap_usdc=spend_cap)
+            logger.info(f"[cyan]Track pricing loaded -> Ask: {ask_cost:.4f} {charge_curr} | Guess: {guess_cost:.4f} {charge_curr} | SpendCap: {f'{spend_cap:.2f} {charge_curr}' if spend_cap else 'unlimited'} | TimeLimit: {f'{time_limit_sec}s' if time_limit_sec else 'unlimited'}[/cyan]")
+            self.cost_optimizer = CostOptimizer(ask_cost_usdc=ask_cost, guess_cost_usdc=guess_cost, spend_cap_usdc=spend_cap, currency=charge_curr)
             
             # P0-3 FIX: Extract actual server-side spend to sync budget tracking on resume
             server_spent = None
@@ -252,12 +254,12 @@ class RacePlanner:
             if server_spent is not None:
                 spent_val = float(server_spent)
                 self.cost_optimizer.total_spent_usdc = spent_val
-                logger.info(f"[cyan]Server budget sync -> Spent: ${spent_val:.4f} USDC | Remaining: ${float(server_remaining) if server_remaining is not None else 'N/A'}[/cyan]")
+                logger.info(f"[cyan]Server budget sync -> Spent: {spent_val:.4f} {charge_curr} | Remaining: {float(server_remaining) if server_remaining is not None else 'N/A'} {charge_curr}[/cyan]")
             elif server_remaining is not None and spend_cap is not None:
                 # Infer spent from remaining
                 spent_val = spend_cap - float(server_remaining)
                 self.cost_optimizer.total_spent_usdc = max(0.0, spent_val)
-                logger.info(f"[cyan]Server budget sync (inferred) -> Spent: ${max(0.0, spent_val):.4f} USDC[/cyan]")
+                logger.info(f"[cyan]Server budget sync (inferred) -> Spent: {max(0.0, spent_val):.4f} {charge_curr}[/cyan]")
             # Set race deadline if time limit exists
             if time_limit_sec:
                 starts_at = active_track.get("startsAt", "")
