@@ -44,6 +44,7 @@ def print_usage():
         f"    [bold {C_GREEN}]sigil_balance[/bold {C_GREEN}]       Check Sigil wallet balance & credit\n"
         f"    [bold {C_GREEN}]my_race[/bold {C_GREEN}]             Show active race state details\n"
         f"    [bold {C_GREEN}]track_state[/bold {C_GREEN}]         Check active track progress\n"
+        f"    [bold {C_GOLD}]watch[/bold {C_GOLD}]               Live spectator telemetry auto-refresh (Live Race)\n"
         f"    [bold {C_CYAN}]start_track[/bold {C_CYAN}] <id>    Register and join a specific track\n"
         f"    [bold {C_CYAN}]ask[/bold {C_CYAN}] <question>      Ask Oracle a YES/NO question ($ USDC)\n"
         f"    [bold {C_CYAN}]guess[/bold {C_CYAN}] <answer>      Submit a guess for current checkpoint\n"
@@ -163,6 +164,80 @@ async def run_command(command: str, args: list):
                 expand=False,
                 padding=(1, 2),
             ))
+
+        elif command == "watch":
+            console.print(f"[bold {C_CYAN}]🛰️ Connecting to Spectator Telemetry Link...[/bold {C_CYAN}]")
+            console.print(f"[dim]Live Race Spectator Dashboard engaging. Press Ctrl+C to exit spectator mode.[/dim]\n")
+            
+            from rich.live import Live
+            
+            with Live(console=console, refresh_per_second=1, screen=False) as live:
+                while True:
+                    try:
+                        state = await client.track_state()
+                        if not state or not isinstance(state, dict):
+                            state = await client.my_race()
+                        
+                        track_name = state.get("trackName") or state.get("name") or "Builder Predict Prelim"
+                        racer = state.get("login", "halimitc")
+                        idx = int(state.get("idx") or 0)
+                        point_count = int(state.get("pointCount") or 8)
+                        hint = state.get("hint") or "-"
+                        questions = state.get("questionsAsked", 0)
+                        guesses = state.get("guessCount", 0)
+                        spent = float(state.get("spentUsd", 0.0) or 0.0)
+                        spend_cap = float(state.get("spendCapUsd", 0.5) or 0.5)
+                        starts_in = state.get("startsInSeconds")
+                        finished = state.get("finished", False)
+                        msg = state.get("message", "")
+                        currency = state.get("chargeCurrency", "AGP")
+                        
+                        progress_pct = int((idx / point_count) * 100) if point_count > 0 else 0
+                        bar_len = 22
+                        filled_len = int(bar_len * (idx / point_count)) if point_count > 0 else 0
+                        prog_bar = f"[{'█' * filled_len}{'░' * (bar_len - filled_len)}] {progress_pct}%"
+                        
+                        if starts_in is not None and int(starts_in) > 0:
+                            mins, secs = divmod(int(starts_in), 60)
+                            status_str = f"[bold white on dark_magenta] 🎲 PREDICT MARKET [/bold white on dark_magenta] (Starts in: [bold gold1]{mins}m {secs:02d}s[/bold gold1])"
+                        elif finished:
+                            status_str = f"[bold white on green4] 🏆 FINISHED THE RACE! 🏆 [/bold white on green4]"
+                        else:
+                            status_str = f"[bold white on green4] 🚦 RACING ACTIVE 🚦 [/bold white on green4]"
+                        
+                        table = Table(box=box.SIMPLE_HEAVY, show_header=False, padding=(0, 2), expand=True)
+                        table.add_column("Key", style=f"bold {C_ORANGE}", width=22)
+                        table.add_column("Val", style=f"bold {C_WHITE}")
+                        
+                        table.add_row("🏁 Track Name", f"[bold {C_GOLD}]{track_name}[/bold {C_GOLD}]")
+                        table.add_row("👤 Racer Pilot", f"[bold {C_CYAN}]@{racer}[/bold {C_CYAN}]")
+                        table.add_row("🚦 Current Status", status_str)
+                        current_cp_display = idx + 1 if (not finished and starts_in in (None, 0)) else idx
+                        table.add_row("📍 Checkpoint Progress", f"Checkpoint [bold {C_GOLD}]{current_cp_display}/{point_count}[/bold {C_GOLD}]  {prog_bar}")
+                        table.add_row("💡 Active Hint", f"[bold yellow]\"{hint}\"[/bold yellow]" if hint and hint != "-" else "[dim]Waiting for race start...[/dim]")
+                        table.add_row("💬 Oracle Questions", f"{questions} asks")
+                        table.add_row("🎯 Guesses Submitted", f"{guesses} guesses")
+                        table.add_row("💰 Budget Used", f"{spent:.4f} / {spend_cap:.2f} {currency}")
+                        if msg:
+                            table.add_row("📢 Server Telemetry", f"[dim]{msg}[/dim]")
+                        
+                        panel = Panel(
+                            table,
+                            border_style=f"bold {C_GOLD}",
+                            title=f"[bold {C_GOLD}]🏎️  AIRA SPECTATOR LIVE RACING TELEMETRY  🏎️[/bold {C_GOLD}]",
+                            subtitle=f"[dim]Live auto-refresh every 3s • Press Ctrl+C to exit spectator mode[/dim]",
+                            title_align="center",
+                            subtitle_align="center",
+                            expand=False,
+                            padding=(1, 2),
+                        )
+                        live.update(panel)
+                        await asyncio.sleep(3.0)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception as poll_err:
+                        live.update(Panel(f"[orange3]Spectator telemetry notice: {poll_err}...[/orange3]", border_style="orange3"))
+                        await asyncio.sleep(3.0)
 
         elif command == "start_track":
             if not args:
