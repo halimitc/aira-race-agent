@@ -1,0 +1,59 @@
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+from dotenv import load_dotenv
+
+# Load dotenv at module level
+load_dotenv()
+
+@dataclass(frozen=True)
+class Config:
+    # AGP Connection Settings
+    agp_server_url: str = os.getenv("AGP_SERVER_URL", "https://api.agp.onlatch.com/track/mcp")
+    agp_token: str = os.getenv("AGP_TOKEN", "")
+
+    # LLM Keys
+    gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+    anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
+    openrouter_api_key: Optional[str] = os.getenv("OPENROUTER_API_KEY")
+
+    # LLM Settings
+    llm_provider: str = os.getenv("REASONING_PROVIDER", os.getenv("LLM_PROVIDER", "gemini")).lower()
+    llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")  # Default model for OpenAI
+    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+
+    # Race Profile Strategy
+    # Options: conservative, balanced, aggressive, ultra_aggressive
+    race_profile: str = os.getenv("RACE_PROFILE", "balanced").lower()
+
+    # Paths and Caching
+    cache_dir: Path = field(default_factory=lambda: Path(os.getenv("CACHE_DIR", ".cache")))
+    memory_file: Path = field(default_factory=lambda: Path(os.getenv("MEMORY_FILE", "memory.json")))
+    learning_file: Path = field(default_factory=lambda: Path(os.getenv("LEARNING_FILE", "learning.json")))
+    metrics_file: Path = field(default_factory=lambda: Path(os.getenv("METRICS_FILE", "metrics.json")))
+
+    def __post_init__(self) -> None:
+        # Create cache directory if it doesn't exist
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def validate(self) -> None:
+        """Validates critical config requirements."""
+        if not self.agp_token or self.agp_token == "agpm_placeholder":
+            raise ValueError(
+                "AGP_TOKEN must be set in your .env file with a valid Latch token (e.g. agpm_...)"
+            )
+        
+        # Verify provider keys
+        if self.llm_provider == "gemini" and not self.gemini_api_key:
+            raise ValueError("GEMINI_API_KEY must be set in your .env file to use Gemini.")
+        elif self.llm_provider == "claude" and not self.anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY must be set in your .env file to use Claude.")
+        elif self.llm_provider in ("openai", "openai_compatible") and not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY must be set in your .env file to use OpenAI / OpenAI Compatible provider.")
+        elif self.llm_provider == "openrouter" and not self.openrouter_api_key:
+            raise ValueError("OPENROUTER_API_KEY must be set in your .env file to use OpenRouter.")
+
+# Global config instance
+config = Config()

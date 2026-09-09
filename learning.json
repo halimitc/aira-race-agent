@@ -1,0 +1,581 @@
+{
+  "categories": {
+    "it's_a": {
+      "Is the tool primarily designed for post-exploitation, lateral movement, or command & control (rather than reconnaissance, vulnerability scanning, or packet analysis)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis or monitoring (rather than vulnerability scanning, code analysis, or host-based security)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning or security assessment (rather than malware analysis, forensics, or host hardening)?": {
+        "info_gains": [
+          0.9871377743721863
+        ],
+        "avg_gain": 0.9871377743721863,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware analysis, reverse engineering, or binary analysis (rather than host hardening, intrusion detection, or digital forensics)?": {
+        "info_gains": [
+          0.964078764808229
+        ],
+        "avg_gain": 0.964078764808229,
+        "usage_count": 1
+      },
+      "Is the tool designed primarily for digital forensics or incident investigation (analyzing artifacts from compromised systems or storage media)?": {
+        "info_gains": [
+          0.9957274520849255
+        ],
+        "avg_gain": 0.9957274520849255,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network-level security (monitoring, scanning, or attacking network traffic) rather than host-level or application-level security?": {
+        "info_gains": [
+          0.9910760598382222
+        ],
+        "avg_gain": 0.9910760598382222,
+        "usage_count": 1
+      },
+      "Is the tool primarily used for passive network monitoring, traffic analysis, or reconnaissance rather than active exploitation or vulnerability scanning?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for password cracking, credential harvesting, or post-exploitation activities rather than vulnerability discovery or application security testing?": {
+        "info_gains": [
+          0.8812908992306927
+        ],
+        "avg_gain": 0.8812908992306927,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for web application security testing (vulnerability scanning, penetration testing, or code analysis) rather than network infrastructure, system hardening, or forensic analysis?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability assessment, scanning, or remediation of systems and applications rather than incident response, forensic analysis, or reverse engineering?": {
+        "info_gains": [
+          0.9798687566511528
+        ],
+        "avg_gain": 0.9798687566511528,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware analysis, reverse engineering, or binary debugging rather than network reconnaissance, intrusion detection, or forensic investigation?": {
+        "info_gains": [
+          0.9886994082884974
+        ],
+        "avg_gain": 0.9886994082884974,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for real-time network monitoring, intrusion detection, or active defense (blocking/filtering threats) rather than post-incident forensics, memory analysis, or evidence collection?": {
+        "info_gains": [
+          0.9456603046006401
+        ],
+        "avg_gain": 0.9456603046006401,
+        "usage_count": 1
+      },
+      "Is the tool primarily a standalone detection or analysis engine (focused on one specific task like pattern matching or memory parsing) rather than a comprehensive forensic investigation platform with integrated workflows, timeline analysis, and reporting capabilities?": {
+        "info_gains": [
+          0.9182958340544896
+        ],
+        "avg_gain": 0.9182958340544896,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning, assessment, or remediation guidance rather than exploitation, payload delivery, or post-compromise command & control?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for post-compromise command & control, lateral movement, or maintaining persistent access rather than initial exploitation, vulnerability discovery, or forensic analysis?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for analyzing or examining static artifacts (files, binaries, memory dumps, disk images) rather than performing active network reconnaissance, live system interaction, or real-time traffic capture?": {
+        "info_gains": [
+          0.9940302114769565
+        ],
+        "avg_gain": 0.9940302114769565,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for web application security testing (including scanning, fuzzing, or intercepting HTTP/HTTPS traffic) rather than network-layer attacks, password cracking, or wireless security?": {
+        "info_gains": [
+          0.8112781244591328
+        ],
+        "avg_gain": 0.8112781244591328,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning and assessment (identifying weaknesses) rather than exploitation, password/hash attacks, or wireless/network sniffing?": {
+        "info_gains": [
+          0.7642045065086203
+        ],
+        "avg_gain": 0.7642045065086203,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic capture, sniffing, or wireless packet analysis rather than exploitation frameworks, credential attacks, or active network manipulation?": {
+        "info_gains": [
+          0.9852281360342515
+        ],
+        "avg_gain": 0.9852281360342515,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for post-exploitation, command & control, credential dumping, or lateral movement rather than initial reconnaissance, scanning, or traffic analysis?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for real-time network monitoring, intrusion detection, or defensive security operations rather than vulnerability assessment, code analysis, or system hardening?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning and assessment (identifying weaknesses in systems/applications) rather than exploitation, forensics, or malware analysis?": {
+        "info_gains": [
+          0.9182958340544896
+        ],
+        "avg_gain": 0.9182958340544896,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for reverse engineering, binary analysis, or malware dissection rather than incident response, forensics collection, or memory analysis?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for digital forensics, evidence collection, or disk/memory analysis rather than network penetration testing, traffic manipulation, or active exploitation?": {
+        "info_gains": [
+          0.9957274520849255
+        ],
+        "avg_gain": 0.9957274520849255,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed to operate at the network layer (Layer 2-4) such as network sniffing, packet manipulation, wireless attacks, or port-level connectivity, rather than application-layer protection or exploitation?": {
+        "info_gains": [
+          0.9852281360342515
+        ],
+        "avg_gain": 0.9852281360342515,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning and asset discovery (identifying weaknesses and exposed services) rather than active exploitation, post-exploitation, or payload delivery?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for active exploitation, credential cracking, post-exploitation, or payload delivery rather than defensive detection, threat analysis, or protective enforcement?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for analyzing captured data, forensics, or reverse engineering (examining existing artifacts, memory dumps, or binaries) rather than real-time monitoring, traffic inspection, or live system defense?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic capture, analysis, or packet-level inspection (monitoring what flows across the network) rather than vulnerability assessment, endpoint exploitation, or command & control?": {
+        "info_gains": [
+          0.8812908992306927
+        ],
+        "avg_gain": 0.8812908992306927,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning, assessment, or identification (finding weaknesses in systems or code) rather than web application testing, penetration testing, or security code analysis?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for interactive debugging, disassembly, or reverse engineering of binaries and executables (stepping through code, analyzing assembly) rather than vulnerability scanning or automated security assessment?": {
+        "info_gains": [
+          0.7642045065086203
+        ],
+        "avg_gain": 0.7642045065086203,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for web application security testing (scanning web apps, finding web vulnerabilities, crawling endpoints) rather than general-purpose vulnerability scanning, static code analysis, or system/configuration assessment?": {
+        "info_gains": [
+          0.863120568566631
+        ],
+        "avg_gain": 0.863120568566631,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for static application security testing (SAST) or interactive code analysis (analyzing source code without execution) rather than network/infrastructure vulnerability scanning or compliance/configuration assessment?": {
+        "info_gains": [
+          0.8812908992306927
+        ],
+        "avg_gain": 0.8812908992306927,
+        "usage_count": 1
+      },
+      "Is the tool specifically designed to scan and assess system configuration, compliance, and host-level security posture (rather than network vulnerability scanning across multiple remote targets)?": {
+        "info_gains": [
+          0.863120568566631
+        ],
+        "avg_gain": 0.863120568566631,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis, monitoring, and intrusion detection (packet capture, network forensics, IDS/IPS) rather than active vulnerability scanning, exploitation, or post-exploitation?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for active exploitation, post-exploitation, command & control, or credential attack/cracking (rather than vulnerability discovery, scanning, or code analysis)?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for web application security testing (vulnerability scanning, penetration testing, or security analysis of web apps and APIs)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for static code analysis, binary analysis, reverse engineering, or debugging (rather than vulnerability scanning, system hardening, or forensic investigation)?": {
+        "info_gains": [
+          0.7062740891876007
+        ],
+        "avg_gain": 0.7062740891876007,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network-based vulnerability scanning or asset discovery (rather than system hardening, malware detection, forensics, or log/threat analysis)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for digital forensics, memory analysis, or post-incident investigation (rather than prevention, detection, or system hardening)?": {
+        "info_gains": [
+          0.9456603046006401
+        ],
+        "avg_gain": 0.9456603046006401,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware detection, pattern matching, or file/memory scanning (rather than system hardening, intrusion prevention, or compliance/configuration assessment)?": {
+        "info_gains": [
+          0.863120568566631
+        ],
+        "avg_gain": 0.863120568566631,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for offensive penetration testing, exploitation, or post-exploitation (rather than defensive monitoring, vulnerability assessment, or network analysis)?": {
+        "info_gains": [
+          0.9871377743721863
+        ],
+        "avg_gain": 0.9871377743721863,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis, packet capture, or network-level monitoring (rather than vulnerability scanning, application testing, or host-level assessment)?": {
+        "info_gains": [
+          0.783776947484701
+        ],
+        "avg_gain": 0.783776947484701,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for static or dynamic application code analysis, source code scanning, or vulnerability detection in application binaries (rather than infrastructure scanning, host assessment, or forensic analysis)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for password cracking, hash cracking, credential stuffing, or brute-force attacks (rather than scanning, exploitation frameworks, or traffic analysis)?": {
+        "info_gains": [
+          0.6500224216483541
+        ],
+        "avg_gain": 0.6500224216483541,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for post-exploitation, command & control, lateral movement, or maintaining persistence on compromised systems (rather than reconnaissance, vulnerability scanning, or initial access)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis, packet inspection, or network-based intrusion detection (rather than web application testing, vulnerability scanning, or host-based security)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for web application security testing, vulnerability scanning, or dynamic/static code analysis (rather than network reconnaissance, wireless security, forensics, or host-based defense)?": {
+        "info_gains": [
+          0.9871377743721863
+        ],
+        "avg_gain": 0.9871377743721863,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware analysis, reverse engineering, debugging, or binary inspection (rather than vulnerability assessment, host hardening, forensics acquisition, or malware detection)?": {
+        "info_gains": [
+          0.9990102708804813
+        ],
+        "avg_gain": 0.9990102708804813,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability assessment, compliance scanning, or asset/configuration management (rather than forensics, malware detection, host hardening, or incident response)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network reconnaissance, scanning, or traffic analysis (rather than host-based defense, incident response, or forensics)?": {
+        "info_gains": [
+          0.9886994082884974
+        ],
+        "avg_gain": 0.9886994082884974,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for incident response, digital forensics acquisition, or memory analysis (rather than intrusion prevention, malware detection, or host hardening)?": {
+        "info_gains": [
+          0.9456603046006401
+        ],
+        "avg_gain": 0.9456603046006401,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware detection, scanning, or analysis (rather than intrusion prevention, host hardening, or attack exploitation)?": {
+        "info_gains": [
+          0.9852281360342515
+        ],
+        "avg_gain": 0.9852281360342515,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for exploitation, post-exploitation, or command-and-control (rather than vulnerability assessment, scanning, or reconnaissance)?": {
+        "info_gains": [
+          0.9480782435939055
+        ],
+        "avg_gain": 0.9480782435939055,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis, monitoring, or packet inspection (rather than application security, vulnerability scanning, or host-level security)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for proactive vulnerability discovery, security testing, or application assessment (rather than incident response, forensics, malware analysis, or defensive hardening)?": {
+        "info_gains": [
+          0.9480782435939055
+        ],
+        "avg_gain": 0.9480782435939055,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for malware analysis, reverse engineering, or binary inspection (rather than host hardening, forensics, or scanning)?": {
+        "info_gains": [
+          0.9494520153879484
+        ],
+        "avg_gain": 0.9494520153879484,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for or capable of real-time defensive protection, threat prevention, or active system hardening (rather than post-incident analysis, forensics, or discovery)?": {
+        "info_gains": [
+          0.9852281360342515
+        ],
+        "avg_gain": 0.9852281360342515,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for wireless network security testing or analysis (rather than host-based, application-based, or forensic analysis)?": {
+        "info_gains": [
+          0.6840384356390417
+        ],
+        "avg_gain": 0.6840384356390417,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for vulnerability scanning or compliance assessment (rather than forensic investigation or artifact analysis)?": {
+        "info_gains": [
+          0.9910760598382222
+        ],
+        "avg_gain": 0.9910760598382222,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for post-exploitation, command & control, lateral movement, or maintaining persistent access (rather than initial reconnaissance, vulnerability discovery, or traffic analysis)?": {
+        "info_gains": [
+          0.9871377743721863
+        ],
+        "avg_gain": 0.9871377743721863,
+        "usage_count": 1
+      },
+      "Is the tool primarily designed for network traffic analysis, monitoring, or intrusion detection (rather than vulnerability scanning, password cracking, or source code analysis)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character from a game series released primarily on Nintendo platforms?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character a playable protagonist in their own major game series?": {
+        "info_gains": [
+          0.9182958340544896
+        ],
+        "avg_gain": 0.9182958340544896,
+        "usage_count": 1
+      },
+      "Is the character primarily known for platformer games?": {
+        "info_gains": [
+          0.9957274520849255
+        ],
+        "avg_gain": 0.9957274520849255,
+        "usage_count": 1
+      },
+      "Does the character primarily use weapons or tools as their main combat mechanic?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character primarily from a RPG or action-RPG game series?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character primarily from a fighting game or fighting game series?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Is the character primarily a solo protagonist in a single-player focused game narrative?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Is the character primarily associated with a Nintendo franchise?": {
+        "info_gains": [
+          0.9980008838722996
+        ],
+        "avg_gain": 0.9980008838722996,
+        "usage_count": 1
+      },
+      "Does the character's franchise debut occur before 1992?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character primarily from a platformer game genre?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the character playable as the protagonist in their own standalone game series?": {
+        "info_gains": [
+          0.9980008838722996
+        ],
+        "avg_gain": 0.9980008838722996,
+        "usage_count": 1
+      },
+      "Does the character have a distinctive power-up or transformation mechanic that is central to their gameplay identity?": {
+        "info_gains": [
+          0.9852281360342515
+        ],
+        "avg_gain": 0.9852281360342515,
+        "usage_count": 1
+      },
+      "Does the character primarily use projectile or ranged attacks as their main offensive mechanic?": {
+        "info_gains": [
+          0.8812908992306927
+        ],
+        "avg_gain": 0.8812908992306927,
+        "usage_count": 1
+      },
+      "Does the character have the ability to fly or hover as a core mechanic in their primary games?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Does the character originate from a platformer game series where jumping is the primary traversal mechanic?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the company primarily a first-party studio or publisher that owns major exclusive franchises (rather than an independent multi-franchise publisher or mobile-focused company)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Is the company publicly traded as an independent entity (not owned by a larger parent company)?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Does the company have a primary revenue stream from console hardware, subscriptions, or services (rather than game software sales alone)?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      },
+      "Was the game released in the 1980s or earlier?": {
+        "info_gains": [
+          0.9967916319816366
+        ],
+        "avg_gain": 0.9967916319816366,
+        "usage_count": 1
+      },
+      "Was the game released before 1990?": {
+        "info_gains": [
+          1.0
+        ],
+        "avg_gain": 1.0,
+        "usage_count": 1
+      }
+    }
+  },
+  "races": []
+}
