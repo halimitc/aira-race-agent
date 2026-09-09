@@ -104,7 +104,10 @@ class ReasoningProvider:
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying failover to OpenAI-compatible...[/orange3]")
                     try:
                         self.provider = "openai"
-                        self.model = os.getenv("OPENAI_FALLBACK_MODEL", "gpt-4o-mini")
+                        fallback_model = os.getenv("OPENAI_FALLBACK_MODEL", os.getenv("LLM_MODEL", "qwen/qwen3.8-27b"))
+                        if "groq.com" in config.openai_base_url and ("llama" in fallback_model or "gpt-4" in fallback_model):
+                            fallback_model = "qwen/qwen3.8-27b"
+                        self.model = fallback_model
                         result = await self._call_openai(client, system_prompt, user_prompt)
                         if not is_permanent_billing_err:
                             self.provider = original_provider
@@ -177,9 +180,13 @@ class ReasoningProvider:
             }
         }
         
-        response = await client.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
+        try:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPStatusError as err:
+            logger.error(f"[red]Gemini API returned HTTP {err.response.status_code}: {err.response.text}[/red]")
+            raise
         
         # Extract text content
         candidates = data.get("candidates", [])
