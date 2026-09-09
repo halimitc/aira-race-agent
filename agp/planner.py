@@ -421,17 +421,19 @@ class RacePlanner:
 
                 # Get active candidates list
                 active_candidates = self.candidate_manager.get_active_candidates()
+                is_desperation = False
                 if not active_candidates:
                     logger.warning("Candidate set empty. Regrowing search space via LLM Reasoning Fallback...")
                     candidates = await self.kb.get_candidates(hint, self.memory.state["history"])
                     self.candidate_manager.set_candidates(candidates)
                     active_candidates = self.candidate_manager.get_active_candidates()
                     if not active_candidates:
-                        # BUG FIX 5: Fallback list to prevent infinite loop stalls
+                        # Fallback list to prevent infinite loop stalls
                         fallback = ["apple", "paris", "einstein", "avatar", "yellow", "football", "sushi", "google", "english", "guitar"]
                         logger.error(f"[red]Unable to generate candidates. Injecting desperation fallback candidates: {fallback}[/red]")
                         self.candidate_manager.set_candidates(fallback)
                         active_candidates = self.candidate_manager.get_active_candidates()
+                        is_desperation = True
 
                 # Check deadline urgency — if near deadline, force ultra-aggressive guessing
                 is_urgent = False
@@ -443,11 +445,14 @@ class RacePlanner:
 
                 # 5. Hybrid Guess Burst & Cost-Optimized Guessing
                 # If guesses are free, we enter rapid-fire Guess Burst mode for up to 30 candidates (or 5 for paid)
+                # CRITICAL SAFETY: Never burst guess on desperation fallbacks if guesses cost money!
                 burst_limit = 30 if self.cost_optimizer.guess_cost_usdc <= 0 else 5
-                # In deadline urgency, raise burst limit to push through faster
-                if is_urgent:
+                if is_desperation and self.cost_optimizer.guess_cost_usdc > 0:
+                    burst_limit = 0  # Force asking questions instead of wasting expensive guesses
+                elif is_urgent:
                     burst_limit = max(burst_limit, 15)
-                if len(active_candidates) <= burst_limit:
+
+                if burst_limit > 0 and len(active_candidates) <= burst_limit:
                     logger.info(f"\n[bold yellow]⚡ Entering HYBRID GUESS BURST Phase ({len(active_candidates)} candidates left, limit: {burst_limit}) ⚡[/bold yellow]")
                     solved = False
                     consecutive_misses = 0
