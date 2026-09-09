@@ -192,7 +192,12 @@ async def main():
     parser.add_argument("--mode", type=str, choices=["1", "2", "3"], help="Execution mode")
     args = parser.parse_args()
 
-    is_headless = os.getenv("HEADLESS", "").lower() == "true" or args.track is not None
+    is_headless = (
+        os.getenv("HEADLESS", "").lower() == "true"
+        or args.track is not None
+        or args.mode is not None
+        or not sys.stdin.isatty()
+    )
 
     # Determine mode choice (headless vs interactive)
     if is_headless or args.mode:
@@ -296,6 +301,9 @@ async def main():
 
             if args.track:
                 selected_track = args.track
+            elif not sys.stdin.isatty():
+                best = planner.strategy.choose_best_track(tracks)
+                selected_track = best["id"] if best else tracks[0].get("id")
             else:
                 # Select track with styled prompt
                 track_choices = [t.get("id") for t in tracks]
@@ -354,12 +362,12 @@ async def main():
             expand=False,
         ))
         # Keep container alive in headless mode to prevent CrashLoopBackOff on platforms like Zeabur
-        if args.track:
-            console.print("\n[bold yellow][Zeabur Safety] Headless execution finished. Keeping container alive to prevent CrashLoopBackOff...[/bold yellow]")
+        if is_headless:
+            console.print("\n[bold yellow][Zeabur Safety] Headless execution cycle completed. Polling standby to prevent CrashLoopBackOff...[/bold yellow]")
             try:
                 while True:
-                    await asyncio.sleep(3600)
-            except asyncio.CancelledError:
+                    await asyncio.sleep(60)
+            except (asyncio.CancelledError, KeyboardInterrupt):
                 pass
 
 if __name__ == "__main__":
