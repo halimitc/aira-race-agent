@@ -23,9 +23,10 @@ class Config:
     openrouter_api_key: Optional[str] = os.getenv("OPENROUTER_API_KEY")
 
     # LLM Settings
-    llm_provider: str = os.getenv("REASONING_PROVIDER", os.getenv("LLM_PROVIDER", "gemini")).lower()
-    llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")  # Default model for OpenAI
-    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    llm_provider: str = os.getenv("REASONING_PROVIDER", os.getenv("LLM_PROVIDER", "openai")).lower()
+    llm_model: str = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")  # Ultra-fast model on Groq
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-flash-latest")  # Stable backup Gemini model
+    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
 
     # Race Profile Strategy
     # Options: conservative, balanced, aggressive, ultra_aggressive

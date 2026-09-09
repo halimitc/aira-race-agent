@@ -12,7 +12,7 @@ class ReasoningProvider:
     def __init__(self):
         self.provider = config.llm_provider
         if self.provider == "gemini":
-            self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            self.model = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
         elif self.provider == "claude":
             self.model = os.getenv("CLAUDE_MODEL", "claude-3-5-haiku-20241022")
         else:
@@ -137,13 +137,17 @@ class ReasoningProvider:
                         self.provider = original_provider
                         self.model = original_model
                 elif config.gemini_api_key and self.provider != "gemini":
-                    logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying temporary failover to Gemini...[/orange3]")
+                    logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying fallback to Gemini...[/orange3]")
                     try:
                         self.provider = "gemini"
-                        self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                        self.model = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
                         result = await self._call_gemini(client, system_prompt, user_prompt)
-                        self.provider = original_provider
-                        self.model = original_model
+                        # If Groq had 429 or quota error, switch to Gemini permanently for the session
+                        if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (429, 401, 402):
+                            logger.warning(f"[yellow]⚡ Switched active provider to 'gemini' ({self.model}) as primary hit status {net_err.response.status_code}.[/yellow]")
+                        else:
+                            self.provider = original_provider
+                            self.model = original_model
                         return result
                     except Exception as fallback_err:
                         logger.error(f"[red]Gemini fallback also failed: {fallback_err}[/red]")
@@ -165,41 +169,47 @@ class ReasoningProvider:
                 raise RuntimeError(f"Reasoning failure: {e}") from e
 
     async def _call_gemini(self, client: httpx.AsyncClient, system_prompt: str, user_prompt: str) -> str:
-        """Calls Gemini API directly using HTTP POST."""
+        """Calls Gemini API directly using HTTP POST with multi-model fallback."""
         api_key = config.gemini_api_key
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not configured.")
         
-        # We use generateContent endpoint
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={api_key}"
-        
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": user_prompt}]
+        models_to_try = [self.model]
+        for alt in ["gemini-flash-latest", "gemini-flash-lite-latest"]:
+            if alt not in models_to_try:
+                models_to_try.append(alt)
+
+        last_err = None
+        for m in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={api_key}"
+            payload = {
+                "contents": [
+                    {
+                        "parts": [{"text": user_prompt}]
+                    }
+                ],
+                "systemInstruction": {
+                    "parts": [{"text": system_prompt}]
                 }
-            ],
-            "systemInstruction": {
-                "parts": [{"text": system_prompt}]
             }
-        }
-        
-        try:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
-            data = response.json()
-        except httpx.HTTPStatusError as err:
-            logger.error(f"[red]Gemini API returned HTTP {err.response.status_code}: {err.response.text}[/red]")
-            raise
-        
-        # Extract text content
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if parts:
-                return parts[0].get("text", "").strip()
-        
-        raise ValueError(f"Invalid Gemini response structure: {data}")
+            try:
+                response = await client.post(url, json=payload)
+                response.raise_for_status()
+                data = response.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "").strip()
+            except Exception as err:
+                last_err = err
+                if len(models_to_try) > 1 and m != models_to_try[-1]:
+                    logger.warning(f"[dim]Gemini model '{m}' returned {err}. Trying next Gemini model...[/dim]")
+                continue
+
+        if last_err:
+            raise last_err
+        raise ValueError("Invalid Gemini response structure.")
 
     async def _call_claude(self, client: httpx.AsyncClient, system_prompt: str, user_prompt: str) -> str:
         """Calls Anthropic Claude API directly with fallback to OpenRouter for Claude Haiku."""
@@ -265,23 +275,37 @@ class ReasoningProvider:
             "Content-Type": "application/json"
         }
         
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ]
-        }
-        
-        response = await client.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        
-        choices = data.get("choices", [])
-        if choices:
-            return choices[0].get("message", {}).get("content", "").strip()
-            
-        raise ValueError(f"Invalid OpenAI response structure: {data}")
+        models_to_try = [self.model]
+        if "groq.com" in config.openai_base_url:
+            for alt in ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]:
+                if alt not in models_to_try:
+                    models_to_try.append(alt)
+
+        last_err = None
+        for m in models_to_try:
+            payload = {
+                "model": m,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            }
+            try:
+                response = await client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                choices = data.get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "").strip()
+            except Exception as e:
+                last_err = e
+                if len(models_to_try) > 1 and m != models_to_try[-1]:
+                    logger.warning(f"[dim]Groq model '{m}' returned error: {e}. Trying alternate Groq model...[/dim]")
+                continue
+
+        if last_err:
+            raise last_err
+        raise ValueError("Invalid OpenAI response structure.")
 
     async def _call_openrouter(self, client: httpx.AsyncClient, system_prompt: str, user_prompt: str) -> str:
         """Calls OpenRouter Chat Completion API."""
