@@ -16,9 +16,16 @@ class RaceStrategy:
         # Filter out tracks that have already ended, timed out, or finished
         open_tracks = []
         for track in tracks:
-            is_over = track.get("over") is True or track.get("timedOut") is True or track.get("finished") is True
+            phase = str(track.get("phase", "")).lower()
             status = str(track.get("status", "")).lower()
-            if not is_over and status not in ("abandoned", "finished", "completed"):
+            is_over = (
+                track.get("over") is True 
+                or track.get("timedOut") is True 
+                or track.get("finished") is True 
+                or phase == "over"
+                or status in ("abandoned", "finished", "completed")
+            )
+            if not is_over:
                 open_tracks.append(track)
 
         if not open_tracks:

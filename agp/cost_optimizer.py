@@ -96,32 +96,45 @@ class CostOptimizer:
         # Dynamic threshold modification based on wallet balance and SpendCap consumption
         adjusted_threshold = base_threshold
         
-        # P1-2 FIX: SpendCap ratio monitoring (AGP Winner strategy)
+        # SpendCap ratio monitoring (AGP Winner strategy)
         if self.spend_cap_usdc and self.spend_cap_usdc > 0:
             spent_ratio = self.total_spent_usdc / self.spend_cap_usdc
-            if spent_ratio >= 0.90:
-                adjusted_threshold = min(adjusted_threshold, 0.15)
-                logger.warning(f"[bold red]⚠️ CRITICAL BUDGET ALERT! {spent_ratio:.1%} of SpendCap consumed. Forcing ultra-aggressive guessing (Threshold: {adjusted_threshold:.2%})[/bold red]")
-            elif spent_ratio >= 0.70:
-                adjusted_threshold = min(adjusted_threshold, base_threshold * 0.70)
-                logger.warning(f"[orange3]⚠️ BUDGET WARNING: {spent_ratio:.1%} of SpendCap consumed. Switching to budget-conservation mode (Threshold: {adjusted_threshold:.2%})[/orange3]")
+            if self.guess_cost_usdc > self.ask_cost_usdc:
+                # When guesses are expensive ($0.01 vs $0.001), tight budget means we CANNOT afford wrong guesses!
+                # We must be MORE selective and ask cheap questions instead of gambling on guesses.
+                if spent_ratio >= 0.90:
+                    adjusted_threshold = max(adjusted_threshold, 0.85)
+                    logger.warning(f"[bold yellow]⚠️ BUDGET CRITICAL: {spent_ratio:.1%} spent. Guesses are expensive (${self.guess_cost_usdc}) — requiring {adjusted_threshold:.0%} confidence to guess.[/bold yellow]")
+                elif spent_ratio >= 0.70:
+                    adjusted_threshold = max(adjusted_threshold, 0.75)
+            else:
+                # When guesses are free or cheaper than asks, aggressive guessing saves money
+                if spent_ratio >= 0.90:
+                    adjusted_threshold = min(adjusted_threshold, 0.15)
+                    logger.warning(f"[bold red]⚠️ CRITICAL BUDGET ALERT! {spent_ratio:.1%} of SpendCap consumed. Forcing ultra-aggressive guessing (Threshold: {adjusted_threshold:.2%})[/bold red]")
+                elif spent_ratio >= 0.70:
+                    adjusted_threshold = min(adjusted_threshold, base_threshold * 0.70)
 
         if sigil_balance < 0.02:
             # If balance is getting low, be slightly more conservative if guesses are expensive,
             # or more aggressive if guesses are free.
             if self.guess_cost_usdc > self.ask_cost_usdc:
-                # Guesses are expensive; raise threshold to avoid wasting money on wrong guesses
-                adjusted_threshold = min(0.98, adjusted_threshold * 1.1)
+                adjusted_threshold = min(0.98, max(adjusted_threshold, 0.85))
                 logger.warning(f"Low Sigil balance & expensive guesses! Raising guess threshold to {adjusted_threshold:.2%}")
             else:
-                # Guesses are cheap/free; lower threshold to save money
                 adjusted_threshold = max(0.15, adjusted_threshold * 0.7)
                 logger.warning(f"Low Sigil balance & cheap guesses! Lowering guess threshold to {adjusted_threshold:.2%}")
+
+        # CRITICAL SAFETY: If guesses are paid, NEVER guess if confidence < 65% and candidate space > 2
+        # (Asking a $0.001 question to eliminate 50% of candidates is 10x cheaper than a $0.01 missed guess!)
+        if self.guess_cost_usdc > 0 and top_candidate_prob < 0.65 and remaining_candidates_count > 2 and self.can_afford_ask():
+            logger.info(f"[cyan]Decision: ASK (Paid guess protection: top candidate confidence {top_candidate_prob:.2%} too low to risk ${self.guess_cost_usdc:.4f} guess)[/cyan]")
+            return False
 
         # Deciding factors:
         # 1. Probability exceeds adjusted profile threshold
         # 2. Expected cost of guessing is lower than asking
-        if top_candidate_prob >= adjusted_threshold or expected_cost_guess_path < expected_cost_ask_path:
+        if top_candidate_prob >= adjusted_threshold or (expected_cost_guess_path < expected_cost_ask_path and top_candidate_prob >= 0.50):
             logger.info(
                 f"[green]Decision: GUESS (Confidence {top_candidate_prob:.2%} >= Threshold {adjusted_threshold:.2%} "
                 f"or Guess Path ${expected_cost_guess_path:.6f} < Ask Path ${expected_cost_ask_path:.6f})[/green]"

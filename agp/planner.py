@@ -680,8 +680,20 @@ class RacePlanner:
                 await asyncio.sleep(0.1)
                 
             except Exception as loop_err:
-                logger.error(f"[red]Error in race loop step: {loop_err}[/red]")
+                err_str = str(loop_err)
+                logger.error(f"[red]Error in race loop step: {err_str}[/red]")
                 cached_race_state = None  # Force refresh on error
+                if "sigil debit failed" in err_str.lower() or "insufficient" in err_str.lower() or "policy limit" in err_str.lower():
+                    logger.warning("[bold red]💳 Sigil debit limit or spend cap reached. Syncing wallet status...[/bold red]")
+                    try:
+                        bal = await self.client.sigil_balance()
+                        s_bal = bal.get("sigilBalance", {})
+                        if s_bal.get("creditStatus") == "failed" or float(s_bal.get("balanceUsd", 0)) <= 0.001:
+                            logger.error("[bold red]Wallet credit/balance exhausted. Standing by for race conclusion...[/bold red]")
+                            await asyncio.sleep(15.0)
+                            continue
+                    except Exception:
+                        pass
                 await asyncio.sleep(3.0)
 
         # Stop race metrics and learning
