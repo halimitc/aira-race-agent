@@ -10,8 +10,11 @@ load_dotenv()
 @dataclass(frozen=True)
 class Config:
     # AGP Connection Settings
-    agp_server_url: str = os.getenv("AGP_SERVER_URL", "https://api.agp.onlatch.com/track/mcp")
-    agp_token: str = os.getenv("AGP_TOKEN", "")
+    # Automatically normalize /track/mcp to /track/mcp/sse if needed
+    _raw_url: str = os.getenv("AGP_SERVER_URL", "https://api.agp.onlatch.com/track/mcp/sse").strip()
+    agp_server_url: str = _raw_url if _raw_url.endswith("/sse") else f"{_raw_url.rstrip('/')}/sse"
+    # Support both AGP_TOKEN and AUTH (from official MCP config snippet) and strip 'Bearer ' if present
+    agp_token: str = (os.getenv("AGP_TOKEN") or os.getenv("AUTH") or "").replace("Bearer ", "").strip()
 
     # LLM Keys
     gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
