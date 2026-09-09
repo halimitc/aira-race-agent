@@ -444,12 +444,11 @@ class RacePlanner:
                         logger.warning(f"[bold red]⏰ DEADLINE URGENCY! Only {remaining_time:.0f}s remaining! Switching to panic mode.[/bold red]")
 
                 # 5. Hybrid Guess Burst & Cost-Optimized Guessing
-                # If guesses are free, we enter rapid-fire Guess Burst mode for up to 30 candidates (or 5 for paid)
-                # CRITICAL SAFETY: Never burst guess on desperation fallbacks if guesses cost money!
-                burst_limit = 30 if self.cost_optimizer.guess_cost_usdc <= 0 else 5
-                if is_desperation and self.cost_optimizer.guess_cost_usdc > 0:
-                    burst_limit = 0  # Force asking questions instead of wasting expensive guesses
-                elif is_urgent:
+                # If guesses are free, we enter rapid-fire Guess Burst mode for up to 30 candidates.
+                # CRITICAL RULE FOR AGP PREDICT: If guesses are PAID ($0.01), burst_limit is 0!
+                # (Tie-breaker is lowest spend: every wrong guess demotes ranking by 10 positions!)
+                burst_limit = 30 if self.cost_optimizer.guess_cost_usdc <= 0 else 0
+                if is_urgent and self.cost_optimizer.guess_cost_usdc <= 0:
                     burst_limit = max(burst_limit, 15)
 
                 if burst_limit > 0 and len(active_candidates) <= burst_limit:
@@ -521,10 +520,35 @@ class RacePlanner:
                 sigil_bal = self.oracle.get_cached_balance()
 
                 # In deadline urgency or spendCap exhausted, force guess regardless
-                force_guess = is_urgent or not self.cost_optimizer.can_afford_ask()
+                force_guess = (is_urgent and not self.cost_optimizer.can_afford_ask()) or (not self.cost_optimizer.can_afford_ask() and not self.cost_optimizer.can_afford_guess())
                 if force_guess or self.cost_optimizer.should_guess(top_prob, len(active_candidates), sigil_bal):
                     canonical_guess = await self.resolver.resolve(top_candidate)
                     
+                    # 🎯 SNIPER PRE-VERIFICATION:
+                    # If guess is paid ($0.01), ask the Oracle specifically for $0.001 first!
+                    # If YES -> 100% guaranteed win on guess #1 (like tiadler)!
+                    # If NO  -> eliminates candidate for 1/10th of the price (saves $0.009 & preserves leaderboard rank)!
+                    if self.cost_optimizer.guess_cost_usdc > 0 and self.cost_optimizer.can_afford_ask() and top_prob < 0.98:
+                        verify_q = f"Is the secret word specifically '{canonical_guess}'?"
+                        logger.info(f"[bold cyan]🎯 Sniper Pre-Verification Ask ($0.001): '{verify_q}'[/bold cyan]")
+                        v_answer = await self.oracle.ask(verify_q)
+                        history_list = self.memory.state["history"]
+                        history_list.append({"question": verify_q, "answer": v_answer})
+                        self.cost_optimizer.record_spend(self.cost_optimizer.ask_cost_usdc)
+                        self.memory.state["usdc_spent"] = self.memory.state.get("usdc_spent", 0.0) + self.cost_optimizer.ask_cost_usdc
+                        self.memory.state["question_count"] = self.memory.state.get("question_count", 0) + 1
+                        self.memory.save()
+                        
+                        if v_answer == "no":
+                            logger.warning(f"[orange3]🎯 Sniper check eliminated '{canonical_guess}' for only $0.001! (Saved ${self.cost_optimizer.guess_cost_usdc - self.cost_optimizer.ask_cost_usdc:.4f})[/orange3]")
+                            self.candidate_manager.candidates[top_candidate] = 0.0
+                            self.memory.state["candidate_probabilities"] = self.candidate_manager.candidates.copy()
+                            self.memory.save()
+                            continue
+                        elif v_answer == "yes":
+                            logger.info(f"[bold green]🎯 Sniper check CONFIRMED '{canonical_guess}' with 100% certainty! Submitting winning guess...[/bold green]")
+                            top_prob = 1.0
+
                     cost_label = "paid" if self.cost_optimizer.guess_cost_usdc > 0 else "free"
                     logger.info(f"[cyan]Submitting {cost_label} guess: '{canonical_guess}' (Original: '{top_candidate}')[/cyan]")
                     
@@ -602,34 +626,34 @@ class RacePlanner:
                         best_q = None
 
                 if not best_q:
-                    # BUG FIX 9: If no questions can be formed, submit guess and properly check result
                     canonical_guess = await self.resolver.resolve(top_candidate)
-                    logger.warning(f"No unique questions can be generated. Submitting desperation guess: '{canonical_guess}'")
-                    guess_res = await self.client.guess(canonical_guess)
-                    cached_race_state = None
-                    
-                    # BUG FIX 1: Safely parse result
-                    is_correct = self._is_guess_correct(guess_res)
-                    self.memory.state["guess_count"] = self.memory.state.get("guess_count", 0) + 1
-                    self.memory.state["usdc_spent"] = self.memory.state.get("usdc_spent", 0.0) + self.cost_optimizer.guess_cost_usdc
-                    self.metrics.record_guess(is_correct=is_correct, cost=self.cost_optimizer.guess_cost_usdc)
-                    
-                    if is_correct:
-                        logger.info(f"[bold green]>>> Checkpoint {current_point} SOLVED with desperation guess! <<<[/bold green]")
-                        # BUG FIX 2: Wait for checkpoint state to update on server to prevent double-spending
-                        await self._wait_for_checkpoint_advance(current_point)
+                    if self.cost_optimizer.guess_cost_usdc > 0 and self.cost_optimizer.can_afford_ask():
+                        best_q = f"Is the secret word specifically '{canonical_guess}'?"
+                        logger.info(f"[bold cyan]🎯 Formed specific candidate question ($0.001): '{best_q}'[/bold cyan]")
                     else:
-                        self.candidate_manager.candidates[top_candidate] = 0.0
-                        logger.warning(f"Desperation guess '{canonical_guess}' failed. Regrowing candidates...")
-                        # Force candidate regrowth on next iteration via Layer 2 LLM
-                        candidates = await self.kb.get_candidates(hint, history_list, force_refresh=True, bypass_offline=True)
-                        if not candidates:
-                            candidates = await self.kb.get_candidates(hint, history_list, force_refresh=True)
-                        self.candidate_manager.set_candidates(candidates)
-                    
-                    self.memory.save()
-                    await asyncio.sleep(1.0)
-                    continue
+                        logger.warning(f"No unique questions can be generated. Submitting desperation guess: '{canonical_guess}'")
+                        guess_res = await self.client.guess(canonical_guess)
+                        cached_race_state = None
+                        
+                        is_correct = self._is_guess_correct(guess_res)
+                        self.memory.state["guess_count"] = self.memory.state.get("guess_count", 0) + 1
+                        self.memory.state["usdc_spent"] = self.memory.state.get("usdc_spent", 0.0) + self.cost_optimizer.guess_cost_usdc
+                        self.metrics.record_guess(is_correct=is_correct, cost=self.cost_optimizer.guess_cost_usdc)
+                        
+                        if is_correct:
+                            logger.info(f"[bold green]>>> Checkpoint {current_point} SOLVED with desperation guess! <<<[/bold green]")
+                            await self._wait_for_checkpoint_advance(current_point)
+                        else:
+                            self.candidate_manager.candidates[top_candidate] = 0.0
+                            logger.warning(f"Desperation guess '{canonical_guess}' failed. Regrowing candidates...")
+                            candidates = await self.kb.get_candidates(hint, history_list, force_refresh=True, bypass_offline=True)
+                            if not candidates:
+                                candidates = await self.kb.get_candidates(hint, history_list, force_refresh=True)
+                            self.candidate_manager.set_candidates(candidates)
+                        
+                        self.memory.save()
+                        await asyncio.sleep(1.0)
+                        continue
 
                 info_gain = score.get("info_gain", 0.0)
 
