@@ -101,7 +101,7 @@ class ReasoningProvider:
                     is_permanent_billing_err = True
 
                 if config.openai_api_key and self.provider not in ("openai", "openai_compatible"):
-                    logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying failover to OpenAI-compatible...[/orange3]")
+                    logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Failing over to Groq...[/orange3]")
                     self.provider = "openai"
                     fallback_models = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
                     result = None
@@ -116,11 +116,8 @@ class ReasoningProvider:
                             continue
 
                     if result:
-                        if not is_permanent_billing_err:
-                            self.provider = original_provider
-                            self.model = original_model
-                        else:
-                            logger.warning(f"[yellow]Permanently switched LLM provider to 'openai' due to billing/auth error on '{original_provider}'.[/yellow]")
+                        # If primary provider failed, remain on ultra-fast Groq to avoid wasting time on repeated timeouts mid-race!
+                        logger.warning(f"[yellow]⚡ Switched active provider to 'openai' ({self.model}) on Groq for ultra-fast zero-timeout responses.[/yellow]")
                         return result
                     else:
                         logger.error(f"[red]All OpenAI-compatible fallback models failed.[/red]")
