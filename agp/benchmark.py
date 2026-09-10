@@ -112,10 +112,16 @@ class OfflineBenchmark:
             # Resolve guess name canonicalization
             canonical_guess = await self.resolver.resolve(top_candidate)
             
-            # Check if Cost Optimizer recommends guessing
-            if self.cost_optimizer.should_guess(top_prob, len(active), 0.05):
+            # Check if Cost Optimizer or Hard-Cap recommends guessing
+            trigger_guess = (
+                len(active) <= 3 or 
+                asks_count >= 4 or 
+                self.cost_optimizer.should_guess(top_prob, len(active), 0.05)
+            )
+
+            if trigger_guess:
                 guesses_count += 1
-                logger.info(f"[cyan]Submitting simulated guess: '{canonical_guess}' (Secret: '{secret}')[/cyan]")
+                logger.info(f"[cyan]Submitting simulated guess: '{canonical_guess}' (Secret: '{secret}') [CP Asks: {asks_count}][/cyan]")
                 
                 # Check if guess is correct (case-insensitive)
                 if canonical_guess.lower() == secret.lower() or secret.lower() in canonical_guess.lower():
@@ -150,7 +156,16 @@ class OfflineBenchmark:
             
             # Update history and candidate probabilities
             history.append({"question": best_q, "answer": answer})
-            await self.candidate_manager.update_probabilities(best_q, answer)
+            
+            # Fast 0ms Partition: eliminates 2nd LLM call if partition lists are present
+            yes_cands = score.get("yes_candidates", [])
+            no_cands = score.get("no_candidates", [])
+            partitioned = False
+            if yes_cands and no_cands:
+                partitioned = self.candidate_manager.apply_partition(best_q, answer, yes_cands, no_cands)
+            
+            if not partitioned:
+                await self.candidate_manager.update_probabilities(best_q, answer)
             
         elapsed = time.time() - start_cp_time
         return {

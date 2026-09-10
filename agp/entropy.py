@@ -107,8 +107,9 @@ class EntropyEngine:
             system_prompt = (
                 "You are the Ultra-Fast Single-Pass Entropy Engine of an autonomous AGP racing agent.\n"
                 "Your task is to analyze candidate entities and return the single BEST YES/NO question that splits the candidate list as close to a 50/50 ratio as possible.\n"
+                "You MUST also partition the candidates into 'yes_candidates' (for which the answer is TRUE) and 'no_candidates' (for which the answer is FALSE).\n"
                 "Output MUST be valid JSON with keys:\n"
-                '{"best_question": "...", "reasoning": "...", "estimated_yes_count": <int>, "estimated_no_count": <int>}\n'
+                '{"best_question": "...", "reasoning": "...", "yes_candidates": ["item1", ...], "no_candidates": ["item2", ...]}\n'
                 "Do not include markdown code block quotes around the JSON."
             )
             
@@ -116,7 +117,7 @@ class EntropyEngine:
                 f"Hint: '{hint}'\n"
                 f"Recent History: {history_str}\n"
                 f"Active Candidates ({len(sample_candidates)}): {json.dumps(sample_candidates)}\n"
-                "Formulate and select the single optimal 50/50 binary YES/NO question:"
+                "Formulate and select the single optimal 50/50 binary YES/NO question and partition the candidates:"
             )
 
             response_text = await self.provider.generate_response(system_prompt, user_prompt)
@@ -128,10 +129,13 @@ class EntropyEngine:
             if not best_question:
                 raise ValueError("LLM returned empty best_question")
                 
+            yes_cands = [str(c).strip() for c in data.get("yes_candidates", []) if str(c).strip()]
+            no_cands = [str(c).strip() for c in data.get("no_candidates", []) if str(c).strip()]
+
             raw_yes = data.get("estimated_yes_count")
             raw_no = data.get("estimated_no_count")
-            yes_c = float(raw_yes) if raw_yes is not None else float(len(sample_candidates) / 2)
-            no_c = float(raw_no) if raw_no is not None else float(len(sample_candidates) / 2)
+            yes_c = float(len(yes_cands)) if yes_cands else (float(raw_yes) if raw_yes is not None else float(len(sample_candidates) / 2))
+            no_c = float(len(no_cands)) if no_cands else (float(raw_no) if raw_no is not None else float(len(sample_candidates) / 2))
             
             total = yes_c + no_c
             p_yes = yes_c / total if total > 0 else 0.5
@@ -146,6 +150,8 @@ class EntropyEngine:
                 "info_gain": entropy,
                 "yes_count": yes_c,
                 "no_count": no_c,
+                "yes_candidates": yes_cands,
+                "no_candidates": no_cands,
                 "partition_quality": 1.0 - abs(p_yes - 0.5) * 2.0
             }
             

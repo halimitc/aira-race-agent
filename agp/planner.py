@@ -523,7 +523,23 @@ class RacePlanner:
 
                 # In deadline urgency or spendCap exhausted, force guess regardless
                 force_guess = (is_urgent and not self.cost_optimizer.can_afford_ask()) or (not self.cost_optimizer.can_afford_ask() and not self.cost_optimizer.can_afford_guess())
-                if force_guess or self.cost_optimizer.should_guess(top_prob, len(active_candidates), sigil_bal):
+                
+                history_list = self.memory.state.get("history", [])
+                cp_asks_count = len(history_list)
+
+                # TRIGGER FOR SNIPER EXECUTION:
+                # 1. Candidates <= 3 (critical narrowing achieved)
+                # 2. Hard-Cap reached: >= 4 questions asked on this checkpoint (prevents analysis paralysis)
+                # 3. Urgency / spend cap reached
+                # 4. Standard CostOptimizer recommendation
+                trigger_sniper = (
+                    len(active_candidates) <= 3 or 
+                    cp_asks_count >= 4 or 
+                    force_guess or 
+                    self.cost_optimizer.should_guess(top_prob, len(active_candidates), sigil_bal)
+                )
+
+                if trigger_sniper:
                     canonical_guess = await self.resolver.resolve(top_candidate)
                     
                     # 🎯 SNIPER PRE-VERIFICATION:
@@ -532,9 +548,8 @@ class RacePlanner:
                     # If NO  -> eliminates candidate for 1/10th of the price (saves $0.009 & preserves leaderboard rank)!
                     if self.cost_optimizer.guess_cost_usdc > 0 and self.cost_optimizer.can_afford_ask() and top_prob < 0.98:
                         verify_q = f"Is the secret word specifically '{canonical_guess}'?"
-                        logger.info(f"[bold cyan]🎯 Sniper Pre-Verification Ask ($0.001): '{verify_q}'[/bold cyan]")
+                        logger.info(f"[bold cyan]🎯 Sniper Pre-Verification Ask ($0.001) [CP Asks: {cp_asks_count}]: '{verify_q}'[/bold cyan]")
                         v_answer = await self.oracle.ask(verify_q)
-                        history_list = self.memory.state["history"]
                         history_list.append({"question": verify_q, "answer": v_answer})
                         self.cost_optimizer.record_spend(self.cost_optimizer.ask_cost_usdc)
                         self.memory.state["usdc_spent"] = self.memory.state.get("usdc_spent", 0.0) + self.cost_optimizer.ask_cost_usdc
@@ -683,7 +698,16 @@ class RacePlanner:
                 
                 # Prune candidates based on Oracle response
                 prev_candidate_count = len(active_candidates)
-                await self.candidate_manager.update_probabilities(best_q, answer)
+                
+                # Fast 0ms Partition: eliminates 2nd LLM call if partition lists are present
+                yes_cands = score.get("yes_candidates", [])
+                no_cands = score.get("no_candidates", [])
+                partitioned = False
+                if yes_cands and no_cands:
+                    partitioned = self.candidate_manager.apply_partition(best_q, answer, yes_cands, no_cands)
+                
+                if not partitioned:
+                    await self.candidate_manager.update_probabilities(best_q, answer)
                 post_candidate_count = len(self.candidate_manager.get_active_candidates())
                 
                 # Calculate reduction rate

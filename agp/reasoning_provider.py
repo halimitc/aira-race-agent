@@ -308,7 +308,12 @@ class ReasoningProvider:
                 data = response.json()
                 choices = data.get("choices", [])
                 if choices:
-                    content = choices[0].get("message", {}).get("content", "").strip()
+                    msg = choices[0].get("message", {})
+                    content = (msg.get("content") or "").strip()
+                    if not content and msg.get("reasoning"):
+                        content = msg.get("reasoning", "").strip()
+                    if not content and msg.get("reasoning_content"):
+                        content = msg.get("reasoning_content", "").strip()
                     if content:
                         return content
                     # If content was empty, log and try next model

@@ -31,6 +31,74 @@ class CandidateManager:
         active = [c for c, conf in self.candidates.items() if conf > 0.0]
         return sorted(active, key=lambda c: self.candidates[c], reverse=True)
 
+    def apply_partition(self, question: str, answer: str, yes_candidates: List[str], no_candidates: List[str]) -> bool:
+        """Fast local partitioning: prunes candidates in 0ms using the pre-computed partition from Single-Pass Fusion.
+        Returns True if successful, False if fallback LLM consistency check is required."""
+        active_list = self.get_active_candidates()
+        if not active_list or not yes_candidates or not no_candidates:
+            return False
+
+        ans_clean = str(answer).strip().upper()
+        yes_set = {str(c).strip().lower() for c in yes_candidates if str(c).strip()}
+        no_set = {str(c).strip().lower() for c in no_candidates if str(c).strip()}
+        
+        eliminated_set = set()
+        if "YES" in ans_clean:
+            eliminated_set = no_set
+        elif "NO" in ans_clean:
+            eliminated_set = yes_set
+        else:
+            return False
+
+        if not eliminated_set:
+            return False
+
+        eliminated_count = 0
+        new_active = []
+        reason = f"Partition: Q: '{question}' -> A: {ans_clean}"
+        for c in active_list:
+            c_low = c.strip().lower()
+            if c_low in eliminated_set or any(c_low == e or (len(c_low) > 3 and c_low in e) for e in eliminated_set):
+                self.elimination_history[c] = reason
+                self.candidates[c] = 0.0
+                eliminated_count += 1
+                if c not in self.contradicting_answers:
+                    self.contradicting_answers[c] = []
+                self.contradicting_answers[c].append(f"Q: '{question}' -> A: {ans_clean}")
+            else:
+                new_active.append(c)
+                if c not in self.supporting_answers:
+                    self.supporting_answers[c] = []
+                self.supporting_answers[c].append(f"Q: '{question}' -> A: {ans_clean}")
+
+        # Safety: If all were eliminated or none were eliminated, don't use this partition
+        if not new_active or eliminated_count == 0:
+            for c in active_list:
+                if c in self.contradicting_answers and self.contradicting_answers[c] and self.contradicting_answers[c][-1] == f"Q: '{question}' -> A: {ans_clean}":
+                    self.contradicting_answers[c].pop()
+                    self.candidates[c] = 1.0 / len(active_list)
+                    self.elimination_history.pop(c, None)
+                if c in self.supporting_answers and self.supporting_answers[c] and self.supporting_answers[c][-1] == f"Q: '{question}' -> A: {ans_clean}":
+                    self.supporting_answers[c].pop()
+            return False
+
+        # Normalize remaining active candidates
+        sum_prob = sum(self.candidates[c] for c in new_active)
+        if sum_prob > 0.0:
+            for c in new_active:
+                self.candidates[c] /= sum_prob
+        else:
+            equal_prob = 1.0 / len(new_active)
+            for c in new_active:
+                self.candidates[c] = equal_prob
+
+        top_candidate = max(new_active, key=lambda c: self.candidates[c])
+        logger.info(
+            f"[bold green]⚡ [INSTANT 0ms PARTITION] Eliminated {eliminated_count} candidates! "
+            f"{len(new_active)} remaining. Top: '{top_candidate}' ({self.candidates[top_candidate]:.1%})[/bold green]"
+        )
+        return True
+
     async def update_probabilities(self, question: str, answer: str) -> None:
         """Prunes candidates by asking the LLM to identify contradictions in batch."""
         active_list = self.get_active_candidates()
