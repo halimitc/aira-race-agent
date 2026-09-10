@@ -314,6 +314,8 @@ class ReasoningProvider:
                     logger.warning(f"[dim]Groq model '{m}' returned empty content. Trying next model...[/dim]")
             except Exception as e:
                 last_err = e
+                if isinstance(e, httpx.HTTPStatusError) and e.response.status_code in (401, 402, 403, 429):
+                    break
                 if len(models_to_try) > 1 and m != models_to_try[-1]:
                     logger.warning(f"[dim]Groq model '{m}' returned error: {e}. Trying alternate Groq model...[/dim]")
                 continue

@@ -128,17 +128,20 @@ class OfflineBenchmark:
                     self.candidate_manager.candidates[top_candidate] = 0.0
                     continue
 
-            # Generate Questions
-            questions = await self.question_generator.generate_questions(hint, history, active)
-            if not questions:
-                guesses_count += 1
-                if canonical_guess.lower() == secret.lower() or secret.lower() in canonical_guess.lower():
-                    is_solved = True
-                    break
-                continue
-                
-            # Entropy Select
-            best_q, score = await self.entropy_engine.select_best_question(questions, active)
+            # Fast Single-Pass Fusion question selection (1 call instead of 6 parallel calls)
+            try:
+                best_q, score = await self.entropy_engine.select_best_question_fused(
+                    hint, history, active, fallback_questions=None
+                )
+            except Exception as e:
+                questions = await self.question_generator.generate_questions(hint, history, active)
+                if not questions:
+                    guesses_count += 1
+                    if canonical_guess.lower() == secret.lower() or secret.lower() in canonical_guess.lower():
+                        is_solved = True
+                        break
+                    continue
+                best_q, score = await self.entropy_engine.select_best_question(questions, active)
             
             # Ask Oracle
             asks_count += 1
