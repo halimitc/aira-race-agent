@@ -103,7 +103,7 @@ class ReasoningProvider:
                 if config.openai_api_key and self.provider not in ("openai", "openai_compatible"):
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Failing over to Groq...[/orange3]")
                     self.provider = "openai"
-                    fallback_models = ["groq/compound-mini", "groq/compound", "openai/gpt-oss-20b"]
+                    fallback_models = ["qwen/qwen3.8-27b", "groq/compound-mini", "groq/compound"]
                     result = None
                     for f_model in fallback_models:
                         try:
@@ -285,7 +285,7 @@ class ReasoningProvider:
         if self.model and "gemini" not in self.model and "claude" not in self.model:
             models_to_try.append(self.model)
         if "groq.com" in config.openai_base_url:
-            for alt in ["groq/compound-mini", "groq/compound", "openai/gpt-oss-20b"]:
+            for alt in ["qwen/qwen3.8-27b", "groq/compound-mini", "groq/compound"]:
                 if alt not in models_to_try:
                     models_to_try.append(alt)
         elif "x.ai" in config.openai_base_url:

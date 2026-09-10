@@ -27,7 +27,7 @@ class Config:
     llm_model: str = (
         "grok-3-mini"
         if (os.getenv("OPENAI_API_KEY") or "").startswith("xai-") and ("openai/gpt" in os.getenv("LLM_MODEL", "") or not os.getenv("LLM_MODEL"))
-        else os.getenv("LLM_MODEL", "groq/compound-mini")
+        else os.getenv("LLM_MODEL", "qwen/qwen3.8-27b")
     )
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")  # Stable backup Gemini model
     openai_base_url: str = (
