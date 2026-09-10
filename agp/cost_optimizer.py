@@ -105,7 +105,7 @@ class CostOptimizer:
                 # We must be MORE selective and ask cheap questions instead of gambling on guesses.
                 if spent_ratio >= 0.90:
                     adjusted_threshold = max(adjusted_threshold, 0.85)
-                    logger.warning(f"[bold yellow]⚠️ BUDGET CRITICAL: {spent_ratio:.1%} spent. Guesses are expensive (${self.guess_cost_usdc}) — requiring {adjusted_threshold:.0%} confidence to guess.[/bold yellow]")
+                    logger.warning(f"[bold yellow]⚠️ BUDGET CRITICAL: {spent_ratio:.1%} spent. Guesses are expensive ({self.guess_cost_usdc:.4f} {self.currency}) — requiring {adjusted_threshold:.0%} confidence to guess.[/bold yellow]")
                 elif spent_ratio >= 0.70:
                     adjusted_threshold = max(adjusted_threshold, 0.75)
             else:
@@ -127,9 +127,9 @@ class CostOptimizer:
                 logger.warning(f"Low Sigil balance & cheap guesses! Lowering guess threshold to {adjusted_threshold:.2%}")
 
         # CRITICAL SAFETY: If guesses are paid, NEVER guess if confidence < 65% and candidate space > 2
-        # (Asking a $0.001 question to eliminate 50% of candidates is 10x cheaper than a $0.01 missed guess!)
+        # (Asking a cheap question to eliminate 50% of candidates is 10x cheaper than a missed guess!)
         if self.guess_cost_usdc > 0 and top_candidate_prob < 0.65 and remaining_candidates_count > 2 and self.can_afford_ask():
-            logger.info(f"[cyan]Decision: ASK (Paid guess protection: top candidate confidence {top_candidate_prob:.2%} too low to risk ${self.guess_cost_usdc:.4f} guess)[/cyan]")
+            logger.info(f"[cyan]Decision: ASK (Paid guess protection: top candidate confidence {top_candidate_prob:.2%} too low to risk {self.guess_cost_usdc:.4f} {self.currency} guess)[/cyan]")
             return False
 
         # Deciding factors:

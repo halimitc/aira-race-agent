@@ -230,7 +230,7 @@ class OfflineBenchmark:
             f"  • [bold white]Total Race Time:[/bold white]          {total_race_time:.2f} seconds\n"
             f"  • [bold white]Total Oracle Questions (Asks):[/bold white] {total_asks}\n"
             f"  • [bold white]Total Guesses Submitted:[/bold white]  {total_guesses}\n"
-            f"  • [bold white]USDC Spent (Est):[/bold white]         ${total_asks * 0.001:.4f} USDC\n",
+            f"  • [bold white]Total Cost (Est):[/bold white]         {total_asks * 0.001:.4f} AGP\n",
             border_style="bold green",
             title="[bold gold1]🏆 FINAL RACE RESULTS 🏆[/bold gold1]",
             expand=False,

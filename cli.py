@@ -46,7 +46,7 @@ def print_usage():
         f"    [bold {C_GREEN}]track_state[/bold {C_GREEN}]         Check active track progress\n"
         f"    [bold {C_GOLD}]watch[/bold {C_GOLD}]               Live spectator telemetry auto-refresh (Live Race)\n"
         f"    [bold {C_CYAN}]start_track[/bold {C_CYAN}] <id>    Register and join a specific track\n"
-        f"    [bold {C_CYAN}]ask[/bold {C_CYAN}] <question>      Ask Oracle a YES/NO question ($ USDC)\n"
+        f"    [bold {C_CYAN}]ask[/bold {C_CYAN}] <question>      Ask Oracle a YES/NO question (AGP tokens)\n"
         f"    [bold {C_CYAN}]guess[/bold {C_CYAN}] <answer>      Submit a guess for current checkpoint\n"
         f"    [bold {C_PURPLE}]practice_ask[/bold {C_PURPLE}] <q>   Ask YES/NO on practice verification point\n"
         f"    [bold {C_PURPLE}]practice_guess[/bold {C_PURPLE}] <a> Submit answer for practice verification"

@@ -82,7 +82,7 @@ def print_mode_selector():
 
     card1 = Panel(
         f"[bold {C_GREEN}]🏎️ LIVE RACE[/bold {C_GREEN}]\n"
-        f"[{C_DIM}]Compete on Rialo/Latch\nserver using real USDC[/{C_DIM}]\n"
+        f"[{C_DIM}]Compete on Rialo/Latch\nserver using AGP tokens[/{C_DIM}]\n"
         f"[bold {C_WHITE}]Press [bold {C_GREEN}]1[/bold {C_GREEN}] to select[/bold {C_WHITE}]",
         border_style=C_GREEN,
         width=28,
@@ -90,7 +90,7 @@ def print_mode_selector():
     )
     card2 = Panel(
         f"[bold {C_CYAN}]📊 BENCHMARK[/bold {C_CYAN}]\n"
-        f"[{C_DIM}]Simulate races locally\nwithout spending USDC[/{C_DIM}]\n"
+        f"[{C_DIM}]Simulate races locally\nwithout spending AGP[/{C_DIM}]\n"
         f"[bold {C_WHITE}]Press [bold {C_CYAN}]2[/bold {C_CYAN}] to select[/bold {C_WHITE}]",
         border_style=C_CYAN,
         width=28,

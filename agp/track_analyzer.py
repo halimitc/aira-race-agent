@@ -36,6 +36,6 @@ class TrackAnalyzer:
         logger.info(
             f"Track Analysis - Name: {analysis['name']} | "
             f"Points: {analysis['points_count']} ({analysis['difficulty']}) | "
-            f"Est. Cost: ${analysis['estimated_cost_usdc']:.3f} USDC"
+            f"Est. Cost: {analysis['estimated_cost_usdc']:.3f} AGP"
         )
         return analysis
