@@ -200,7 +200,10 @@ class ReasoningProvider:
                 if candidates:
                     parts = candidates[0].get("content", {}).get("parts", [])
                     if parts:
-                        return parts[0].get("text", "").strip()
+                        content = parts[0].get("text", "").strip()
+                        if content:
+                            self.model = m
+                            return content
             except Exception as err:
                 last_err = err
                 if len(models_to_try) > 1 and m != models_to_try[-1]:
@@ -277,7 +280,7 @@ class ReasoningProvider:
         
         models_to_try = [self.model]
         if "groq.com" in config.openai_base_url:
-            for alt in ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]:
+            for alt in ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini"]:
                 if alt not in models_to_try:
                     models_to_try.append(alt)
 
@@ -296,7 +299,11 @@ class ReasoningProvider:
                 data = response.json()
                 choices = data.get("choices", [])
                 if choices:
-                    return choices[0].get("message", {}).get("content", "").strip()
+                    content = choices[0].get("message", {}).get("content", "").strip()
+                    if content:
+                        return content
+                    # If content was empty, log and try next model
+                    logger.warning(f"[dim]Groq model '{m}' returned empty content. Trying next model...[/dim]")
             except Exception as e:
                 last_err = e
                 if len(models_to_try) > 1 and m != models_to_try[-1]:
@@ -305,7 +312,7 @@ class ReasoningProvider:
 
         if last_err:
             raise last_err
-        raise ValueError("Invalid OpenAI response structure.")
+        raise ValueError("Invalid or empty OpenAI response.")
 
     async def _call_openrouter(self, client: httpx.AsyncClient, system_prompt: str, user_prompt: str) -> str:
         """Calls OpenRouter Chat Completion API."""

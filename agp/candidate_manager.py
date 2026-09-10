@@ -66,13 +66,8 @@ class CandidateManager:
         try:
             response_text = await self.provider.generate_response(system_prompt, user_prompt)
             
-            # Clean response JSON
-            if "```json" in response_text:
-                response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-                
-            eliminated = json.loads(response_text.strip())
+            from agp.json_utils import clean_and_parse_json
+            eliminated = clean_and_parse_json(response_text)
             if isinstance(eliminated, list):
                 eliminated_set = {str(item).strip().lower() for item in eliminated}
             else:

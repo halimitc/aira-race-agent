@@ -41,13 +41,8 @@ class EntropyEngine:
         try:
             response_text = await self.provider.generate_response(system_prompt, user_prompt)
             
-            # Clean JSON
-            if "```json" in response_text:
-                response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-                
-            data = json.loads(response_text.strip())
+            from agp.json_utils import clean_and_parse_json
+            data = clean_and_parse_json(response_text)
             yes_set = data.get("yes", [])
             no_set = data.get("no", [])
             
@@ -126,12 +121,8 @@ class EntropyEngine:
 
             response_text = await self.provider.generate_response(system_prompt, user_prompt)
             
-            if "```json" in response_text:
-                response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-
-            data = json.loads(response_text.strip())
+            from agp.json_utils import clean_and_parse_json
+            data = clean_and_parse_json(response_text)
             best_question = str(data.get("best_question", "")).strip()
             
             if not best_question:

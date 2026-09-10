@@ -72,15 +72,8 @@ class CanonicalResolver:
                 SYSTEM_CANONICAL_RESOLVER, user_prompt
             )
             
-            # Parse JSON response
-            # Format: {"canonical_name": "...", "aliases": [...]}
-            # Handle possible markdown wrapping
-            if "```json" in response_text:
-                response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-                
-            data = json.loads(response_text.strip())
+            from agp.json_utils import clean_and_parse_json
+            data = clean_and_parse_json(response_text)
             if isinstance(data, dict):
                 canonical_name = str(data.get("canonical_name") or entity).strip()
             elif isinstance(data, str):

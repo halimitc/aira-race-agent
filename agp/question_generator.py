@@ -47,13 +47,11 @@ class QuestionGenerator:
                 SYSTEM_QUESTION_GENERATION, user_prompt
             )
             
-            # Parse JSON list response
-            if "```json" in response_text:
-                response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-                
-            questions = json.loads(response_text.strip())
+            # Parse JSON list response safely
+            from agp.json_utils import clean_and_parse_json
+            questions = clean_and_parse_json(response_text)
+            if not isinstance(questions, list):
+                questions = [str(questions)]
             
             # Clean and filter duplicates/invalid questions
             cleaned_questions = []

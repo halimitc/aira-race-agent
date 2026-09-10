@@ -434,13 +434,10 @@ class HybridKnowledgeBase:
                     SYSTEM_CANDIDATE_GENERATION, user_prompt
                 )
                 
-                # Parse JSON array response
-                if "```json" in response_text:
-                    response_text = response_text.split("```json", 1)[1].split("```", 1)[0]
-                elif "```" in response_text:
-                    response_text = response_text.split("```", 1)[1].split("```", 1)[0]
-                
-                candidates = json.loads(response_text.strip())
+                from agp.json_utils import clean_and_parse_json
+                candidates = clean_and_parse_json(response_text)
+                if not isinstance(candidates, list):
+                    candidates = [str(candidates)]
             except Exception as e:
                 logger.error(f"LLM candidate generation failed: {e}")
 
