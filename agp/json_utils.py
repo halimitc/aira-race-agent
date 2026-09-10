@@ -41,7 +41,31 @@ def clean_and_parse_json(text: str) -> Any:
         end_bracket = cleaned.rfind(target_char)
         if end_bracket != -1 and end_bracket > start_bracket:
             sub = cleaned[start_bracket:end_bracket + 1]
-            return json.loads(sub)
+            try:
+                return json.loads(sub)
+            except Exception:
+                pass
 
-    # 5. Last resort: raise original error
+    # 5. Regex rescue for Single-Pass Fusion object
+    if "best_question" in cleaned:
+        q_match = re.search(r'"best_question"\s*:\s*"([^"\r\n]+)', cleaned)
+        if q_match:
+            best_q = q_match.group(1).strip()
+            yes_match = re.search(r'"yes_candidates"\s*:\s*\[(.*?)\]', cleaned, re.DOTALL)
+            no_match = re.search(r'"no_candidates"\s*:\s*\[(.*?)\]', cleaned, re.DOTALL)
+            yes_cands = [x.strip(' "\'') for x in yes_match.group(1).split(',') if x.strip(' "\'')] if yes_match else []
+            no_cands = [x.strip(' "\'') for x in no_match.group(1).split(',') if x.strip(' "\'')] if no_match else []
+            return {
+                "best_question": best_q,
+                "reasoning": "regex recovered",
+                "yes_candidates": yes_cands,
+                "no_candidates": no_cands
+            }
+
+    # 6. Regex rescue for list of strings (e.g. candidate pruning)
+    items = re.findall(r'"([^"\\]+)"', cleaned)
+    if items:
+        return items
+
+    # 7. Last resort: raise original error
     return json.loads(cleaned)

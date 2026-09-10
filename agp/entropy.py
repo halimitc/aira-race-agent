@@ -175,12 +175,15 @@ class EntropyEngine:
         if not questions:
             raise ValueError("No questions provided for evaluation.")
             
-        # Limit evaluation to top 5 questions to save API time
-        eval_list = questions[:5]
-        
-        # BUG FIX: Score all questions in parallel using asyncio.gather()
-        scoring_tasks = [self.score_question(q, candidates) for q in eval_list]
-        scores = await asyncio.gather(*scoring_tasks, return_exceptions=True)
+        # In fallback mode, score at most 2 questions sequentially to avoid 429 rate limit bursts
+        eval_list = questions[:2]
+        scores = []
+        for q in eval_list:
+            try:
+                s = await self.score_question(q, candidates)
+                scores.append(s)
+            except Exception as sc_err:
+                scores.append(sc_err)
         
         best_question = eval_list[0]
         best_score = {"entropy": -1.0, "info_gain": -1.0}
