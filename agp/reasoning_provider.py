@@ -12,7 +12,7 @@ class ReasoningProvider:
     def __init__(self):
         self.provider = config.llm_provider
         if self.provider == "gemini":
-            self.model = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+            self.model = config.gemini_model or os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
         elif self.provider == "claude":
             self.model = os.getenv("CLAUDE_MODEL", "claude-3-5-haiku-20241022")
         else:
@@ -103,7 +103,7 @@ class ReasoningProvider:
                 if config.openai_api_key and self.provider not in ("openai", "openai_compatible"):
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Failing over to Groq...[/orange3]")
                     self.provider = "openai"
-                    fallback_models = ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini"]
+                    fallback_models = ["groq/compound-mini", "groq/compound", "openai/gpt-oss-20b"]
                     result = None
                     for f_model in fallback_models:
                         try:
@@ -140,12 +140,13 @@ class ReasoningProvider:
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Trying fallback to Gemini...[/orange3]")
                     try:
                         self.provider = "gemini"
-                        self.model = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+                        self.model = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
                         result = await self._call_gemini(client, system_prompt, user_prompt)
-                        # If primary had 429, 401, 402, 403 or quota error, switch to Gemini permanently for the session
-                        if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (429, 401, 402, 403):
+                        # If primary had permanent auth/billing errors (401, 402, 403), switch permanently to Gemini
+                        if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (401, 402, 403):
                             logger.warning(f"[yellow]⚡ Switched active provider to 'gemini' ({self.model}) as primary hit status {net_err.response.status_code}.[/yellow]")
                         else:
+                            # For 429 rate limit or transient network glitches, keep primary so it resumes immediately once TPM window clears
                             self.provider = original_provider
                             self.model = original_model
                         return result
@@ -177,7 +178,7 @@ class ReasoningProvider:
         models_to_try = []
         if self.model and ("gemini" in self.model or "gemma" in self.model):
             models_to_try.append(self.model)
-        for alt in ["gemini-flash-latest", "gemini-flash-lite-latest"]:
+        for alt in ["gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-flash-latest"]:
             if alt not in models_to_try:
                 models_to_try.append(alt)
 
@@ -284,7 +285,7 @@ class ReasoningProvider:
         if self.model and "gemini" not in self.model and "claude" not in self.model:
             models_to_try.append(self.model)
         if "groq.com" in config.openai_base_url:
-            for alt in ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini"]:
+            for alt in ["groq/compound-mini", "groq/compound", "openai/gpt-oss-20b"]:
                 if alt not in models_to_try:
                     models_to_try.append(alt)
         elif "x.ai" in config.openai_base_url:
