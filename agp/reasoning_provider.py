@@ -117,7 +117,7 @@ class ReasoningProvider:
 
                     if result:
                         # If primary provider failed, remain on ultra-fast Groq to avoid wasting time on repeated timeouts mid-race!
-                        logger.warning(f"[yellow]⚡ Switched active provider to 'openai' ({self.model}) on Groq for ultra-fast zero-timeout responses.[/yellow]")
+                        logger.warning(f"[yellow]⚡ Switched active provider to '{self.provider}' ({self.model}) for zero-timeout responses.[/yellow]")
                         return result
                     else:
                         logger.error(f"[red]All OpenAI-compatible fallback models failed.[/red]")
@@ -174,7 +174,9 @@ class ReasoningProvider:
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not configured.")
         
-        models_to_try = [self.model]
+        models_to_try = []
+        if self.model and ("gemini" in self.model or "gemma" in self.model):
+            models_to_try.append(self.model)
         for alt in ["gemini-flash-latest", "gemini-flash-lite-latest"]:
             if alt not in models_to_try:
                 models_to_try.append(alt)
@@ -278,9 +280,15 @@ class ReasoningProvider:
             "Content-Type": "application/json"
         }
         
-        models_to_try = [self.model]
+        models_to_try = []
+        if self.model and "gemini" not in self.model and "claude" not in self.model:
+            models_to_try.append(self.model)
         if "groq.com" in config.openai_base_url:
             for alt in ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini"]:
+                if alt not in models_to_try:
+                    models_to_try.append(alt)
+        elif "x.ai" in config.openai_base_url:
+            for alt in ["grok-3-mini", "grok-3"]:
                 if alt not in models_to_try:
                     models_to_try.append(alt)
 

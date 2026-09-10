@@ -98,8 +98,13 @@ class OfflineBenchmark:
         for step in range(1, 50):
             active = self.candidate_manager.get_active_candidates()
             if not active:
-                logger.error("[red]All candidates eliminated. Checkpoint failed.[/red]")
-                break
+                logger.warning("[orange3]Candidate set empty. Regrowing search space via LLM Reasoning Fallback...[/orange3]")
+                candidates = await kb.get_candidates(hint, history)
+                self.candidate_manager.set_candidates(candidates)
+                active = self.candidate_manager.get_active_candidates()
+                if not active:
+                    logger.error("[red]All candidates eliminated and regrowth failed. Checkpoint failed.[/red]")
+                    break
                 
             top_candidate = active[0]
             top_prob = self.candidate_manager.candidates[top_candidate]
