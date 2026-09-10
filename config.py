@@ -24,9 +24,17 @@ class Config:
 
     # LLM Settings
     llm_provider: str = os.getenv("REASONING_PROVIDER", os.getenv("LLM_PROVIDER", "openai")).lower()
-    llm_model: str = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")  # Ultra-fast model on Groq
+    llm_model: str = (
+        "grok-3-mini"
+        if (os.getenv("OPENAI_API_KEY") or "").startswith("xai-") and ("openai/gpt" in os.getenv("LLM_MODEL", "") or not os.getenv("LLM_MODEL"))
+        else os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
+    )
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-flash-latest")  # Stable backup Gemini model
-    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    openai_base_url: str = (
+        "https://api.x.ai/v1"
+        if (os.getenv("OPENAI_API_KEY") or "").startswith("xai-") and ("groq.com" in os.getenv("OPENAI_BASE_URL", "") or not os.getenv("OPENAI_BASE_URL"))
+        else os.getenv("OPENAI_BASE_URL", "https://api.groq.com/openai/v1").rstrip("/")
+    )
 
     # Race Profile Strategy
     # Options: conservative, balanced, aggressive, ultra_aggressive

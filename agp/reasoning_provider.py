@@ -97,13 +97,13 @@ class ReasoningProvider:
 
                 # Check if error is permanent billing/auth error (402 Payment Required, 401 Unauthorized)
                 is_permanent_billing_err = False
-                if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (401, 402):
+                if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (401, 402, 403):
                     is_permanent_billing_err = True
 
                 if config.openai_api_key and self.provider not in ("openai", "openai_compatible"):
                     logger.warning(f"[orange3]Primary LLM ({self.provider}) error ({net_err}). Failing over to Groq...[/orange3]")
                     self.provider = "openai"
-                    fallback_models = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+                    fallback_models = ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini"]
                     result = None
                     for f_model in fallback_models:
                         try:
@@ -142,8 +142,8 @@ class ReasoningProvider:
                         self.provider = "gemini"
                         self.model = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
                         result = await self._call_gemini(client, system_prompt, user_prompt)
-                        # If Groq had 429 or quota error, switch to Gemini permanently for the session
-                        if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (429, 401, 402):
+                        # If primary had 429, 401, 402, 403 or quota error, switch to Gemini permanently for the session
+                        if isinstance(net_err, httpx.HTTPStatusError) and net_err.response.status_code in (429, 401, 402, 403):
                             logger.warning(f"[yellow]⚡ Switched active provider to 'gemini' ({self.model}) as primary hit status {net_err.response.status_code}.[/yellow]")
                         else:
                             self.provider = original_provider
